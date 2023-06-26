@@ -5,6 +5,8 @@
 #include <unistd.h>
 
 #define MAX_LINE_LENGTH 1024
+#define KEY_ESCAPE '\x1b'
+#define KEY_BACKSPACE '\x7f'
 
 struct termios orig_termios;
 
@@ -47,14 +49,14 @@ void editLine(char line[MAX_LINE_LENGTH]) {
 
         if (c == '\x0a') break;     // Enter で終了
 
-        if (c == '\x1b') {          // Esc
+        if (c == KEY_ESCAPE) {      // (Esc)
             command = c; continue;
-        } else if (command == '\x1b' && c == '\x5b') {  // Esc-[
+        } else if (command == KEY_ESCAPE && c == '[') {  // (Esc-[)
             command = c; continue;
-        } else if (command == '\x5b') {
-            if (c == '\x43' && cursorPosition < lineLength) {   // Esc-[-C カーソルを右に移動
+        } else if (command == '[') {
+            if (c == 'C' && cursorPosition < lineLength) {   // Esc-[-C カーソルを右に移動
                 cursorPosition++;     
-            } else if (c == '\x44' && cursorPosition > 0) {     // Esc-[-D カーソルを左に移動
+            } else if (c == 'D' && cursorPosition > 0) {     // Esc-[-D カーソルを左に移動
                 cursorPosition--;
             }
             command = '\0'; continue;
@@ -62,7 +64,7 @@ void editLine(char line[MAX_LINE_LENGTH]) {
             command = '\0';
         }
 
-        if (c == '\x7f') {  // バックスペースキーで文字を削除
+        if (c == KEY_BACKSPACE) {  // バックスペースキーで文字を削除
             if (cursorPosition > 0) {
                 int i;
                 for (i=cursorPosition; i < lineLength; i++) line[i-1] = line[i];
@@ -71,7 +73,7 @@ void editLine(char line[MAX_LINE_LENGTH]) {
                 lineLength--;
             }
 
-        } else if (c >= 32 && c < 127) {  // 表示可能なASCII文字が押されたら文字を挿入
+        } else if (c >= '\x20' && c <= '\x7E') {  // 表示可能なASCII文字が押されたら文字を挿入
             if (lineLength < MAX_LINE_LENGTH - 1) {
                 int i;
                 for (i=lineLength; i > cursorPosition; i--) line[i] = line[i-1];
