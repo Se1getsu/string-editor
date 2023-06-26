@@ -126,11 +126,18 @@ void editLine(char line[MAX_LINE_LENGTH]) {
                 cursorPos = lineLength-1;
                 break;
 
-            case 'w':   /* カーソルをCSV次列へ */
+            case 'w':   /* カーソルをCSV次列先頭へ */
                 while (cursorPos < lineLength-1 && line[cursorPos++] != ',');
                 break;
 
-            case 'b':   /* カーソルをCSV前列へ */
+            case 'e':   /* カーソルをCSV次列末尾へ */
+                tmp = cursorPos;
+                while (cursorPos < lineLength-2 && line[++cursorPos+1] != ',');
+                if ((line[lineLength-1] != ',' && cursorPos == lineLength-2) ||
+                    (line[lineLength-1] == ',' && tmp == cursorPos)) cursorPos++;
+                break;
+
+            case 'b':   /* カーソルをCSV前列先頭へ */
                 tmp = cursorPos;
                 while (cursorPos > 1 && line[--cursorPos-1] != ',');
                 if ((line[0] != ',' && cursorPos == 1) ||
