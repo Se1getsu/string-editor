@@ -38,8 +38,8 @@ void showEditor(enum SIMode mode, char line[MAX_LINE_LENGTH], int cursorPos) {
     printf("\r\033[2K");    // クリア
     printf("%s \n", line);
     // 2行目を描画
+    printf("\033[2K");      // クリア
     if (mode == INSERT) printf("\e[1m-- INSERT --\e[m");    // 太字
-    else                printf("\033[2K");  // クリア
     // カーソルを1行上の先頭に移動
     printf("\033[1A\r");
     // cursorPos 回カーソルを進める
