@@ -71,7 +71,7 @@ void editLine(char line[MAX_LINE_LENGTH]) {
         
         /* ノーマルモードのキーバインド */
         if (mode == NORMAL) {
-            int tmp;
+            int i, tmp;
 
             if (c == '[') {
                 command = c; continue;
@@ -142,6 +142,13 @@ void editLine(char line[MAX_LINE_LENGTH]) {
                 while (cursorPos > 1 && line[--cursorPos-1] != ',');
                 if ((line[0] != ',' && cursorPos == 1) ||
                     (line[0] == ',' && tmp == cursorPos)) cursorPos--;
+                break;
+
+            /* 編集 */
+            case 'x':   /* 文字を削除 */
+                for (i=cursorPos; i < lineLength-1; i++) line[i] = line[i+1];
+                if (cursorPos > 0 && cursorPos == lineLength-1) cursorPos--;
+                if (lineLength > 0) line[--lineLength] = '\0';
                 break;
 
             default:
