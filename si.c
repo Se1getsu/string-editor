@@ -34,15 +34,15 @@ enum SIMode { NORMAL, INSERT };
  * 文字列エディタをコマンドライン上に描画する
  */
 void showEditor(enum SIMode mode, char line[MAX_LINE_LENGTH], int cursorPos) {
-    // 1行目を描画
-    printf("\r\033[2K");    // クリア
+    /* 1行目を描画 */
+    printf("\r\033[2K");    /*クリア*/
     printf("%s \n", line);
-    // 2行目を描画
-    printf("\033[2K");      // クリア
-    if (mode == INSERT) printf("\e[1m-- INSERT --\e[m");    // 太字
-    // カーソルを1行上の先頭に移動
+    /* 2行目を描画 */
+    printf("\033[2K");      /*クリア*/
+    if (mode == INSERT) printf("\e[1m-- INSERT --\e[m");    /*太字*/
+    /* カーソルを1行上の先頭に移動 */
     printf("\033[1A\r");
-    // cursorPos 回カーソルを進める
+    /* cursorPos 回カーソルを進める */
     if (cursorPos) printf("\033[%dC", cursorPos);
 
     fflush(stdout);
@@ -63,89 +63,109 @@ void editLine(char line[MAX_LINE_LENGTH]) {
     while (1) {
         char c;
         showEditor(mode, line, cursorPos);
-        // printf("\n(%d, %d)",lineLength, cursorPos);
-        
         
         c = getchar();
-        // printf("<%c %d %X>", c,c,c);
 
-        if (c == '\x0a') break;     // Enter で終了
+        /* Enter で終了 */
+        if (c == '\x0a') break;
         
         /* ノーマルモードのキーバインド */
         if (mode == NORMAL) {
+            int tmp;
+
             if (c == '[') {
                 command = c; continue;
             } else if (command == '[') {
                 int lastPos = lineLength-1;
-                if (insertFlg+1) {    // INSERTモードで矢印を押した
+                if (insertFlg+1) {    /*挿入モードで矢印キーを押した*/
                     cursorPos = insertFlg;
                     lastPos++;
                     mode = INSERT;
                     insertFlg = -1;
                 }
-                if (c == 'C' && cursorPos < lastPos) {  // Esc-[-C カーソルを右に移動
-                    cursorPos++;     
-                } else if (c == 'D' && cursorPos > 0) { // Esc-[-D カーソルを左に移動
+                /* Esc-[-C (→) カーソルを1つ右に移動 */
+                if (c == 'C' && cursorPos < lastPos) {
+                    cursorPos++;
+                /* Esc-[-D (←) カーソルを1つ左に移動 */
+                } else if (c == 'D' && cursorPos > 0) {
                     cursorPos--;
                 }
                 command = '\0'; continue;
-            } else {
-                command = '\0'; insertFlg = -1;
             }
+            command = '\0'; insertFlg = -1;
 
-            if (c == 'i') {      // i 挿入モード（前）
-                mode = INSERT;
-            } else if (c == 'a') {      // a 挿入モード（前）
-                mode = INSERT;
-                cursorPos++;
-            } else if (c == 'I') {      // I 挿入モード（行頭）
-                mode = INSERT;
-                cursorPos = 0;
-            } else if (c == 'A') {      // A 挿入モード（行末）
-                mode = INSERT;
-                cursorPos = lineLength;
+            switch (c) {
+            /* モード切り替え */
+            case 'i':   /* 挿入モード(前) */
+                mode = INSERT; break;
 
-            } else if (c == 'h') {      // h カーソルを1つ左へ
+            case 'a':   /* 挿入モード(後) */
+                mode = INSERT; cursorPos++; break;
+
+            case 'I':   /* 挿入モード(行頭) */
+                mode = INSERT; cursorPos = 0; break;
+
+            case 'A':   /* 挿入モード(行末) */
+                mode = INSERT; cursorPos = lineLength; break;
+
+            /* カーソル移動 */
+            case 'h':   /* カーソルを1つ左へ */
                 if (cursorPos > 0) cursorPos--;
-            } else if (c == 'l') {      // l カーソルを1つ左へ
+                break;
+
+            case 'l':   /* カーソルを1つ左へ */
                 if (cursorPos < lineLength-1) cursorPos++;
-            } else if (c == '0' || c == '^') {  // 0 ^ カーソルを行頭へ
+                break;
+
+            case '0':   /* カーソルを行頭へ */
+            case '^':
                 cursorPos = 0;
-            } else if (c == '$') {      // $ カーソルを行頭へ
+                break;
+
+            case '$':   /* カーソルを行末へ */
                 cursorPos = lineLength-1;
-            } else if (c == 'w') {      // w CSV次列へ
+                break;
+
+            case 'w':   /* カーソルをCSV次列へ */
                 while (cursorPos < lineLength-1 && line[cursorPos++] != ',');
-            } else if (c == 'b') {      // w CSV前列へ
-                int tmp = cursorPos;
+                break;
+
+            case 'b':   /* カーソルをCSV前列へ */
+                tmp = cursorPos;
                 while (cursorPos > 1 && line[--cursorPos-1] != ',');
                 if ((line[0] != ',' && cursorPos == 1) ||
                     (line[0] == ',' && tmp == cursorPos)) cursorPos--;
+                break;
+
+            default:
+                break;
             }
 
         /* 挿入モードのキーバインド */
         } else if (mode == INSERT) {
-            if (c == KEY_ESCAPE || c == '\x1b') {     // Esc Ctrl-[ ノーマルモード
+            /* Esc Ctrl-[ ノーマルモード */
+            if (c == KEY_ESCAPE || c == '\x1b') {
                 mode = NORMAL; insertFlg = cursorPos;
                 if (cursorPos > 0) cursorPos--;
                 continue;
 
-            } else if (c == KEY_BACKSPACE) {    // バックスペースキーで文字を削除
-                if (cursorPos > 0) {
-                    int i;
-                    for (i=cursorPos; i < lineLength; i++) line[i-1] = line[i];
-                    line[lineLength-1] = '\0';
-                    cursorPos--;
-                    lineLength--;
-                }
+            /* BackSpace 文字を削除 */
+            } else if (c == KEY_BACKSPACE) {
+                int i;
+                if (cursorPos <= 0) continue;
+                for (i=cursorPos; i < lineLength; i++) line[i-1] = line[i];
+                line[lineLength-1] = '\0';
+                cursorPos--;
+                lineLength--;
 
-            } else if (c >= '\x20' && c <= '\x7E') {  // 表示可能なASCII文字が押されたら文字を挿入
-                if (lineLength < MAX_LINE_LENGTH - 1) {
-                    int i;
-                    for (i=lineLength; i > cursorPos; i--) line[i] = line[i-1];
-                    line[cursorPos] = c;
-                    cursorPos++;
-                    lineLength++;
-                }
+            /* 表示可能なASCII文字を挿入 */
+            } else if (c >= '\x20' && c <= '\x7E') {
+                int i;
+                if (lineLength >= MAX_LINE_LENGTH - 1) continue;
+                for (i=lineLength; i > cursorPos; i--) line[i] = line[i-1];
+                line[cursorPos] = c;
+                cursorPos++;
+                lineLength++;
             }
         }
     }
@@ -160,3 +180,5 @@ int main() {
     printf("結果：\"%s\"\n", line);
     return 0;
 }
+
+/* ================================[Safe Width]================================= */
