@@ -95,7 +95,7 @@ void editLine(char line[MAX_LINE_LENGTH]) {
 
             if (c == 'i') {      // i 挿入モード（前）
                 mode = INSERT;
-            } else if (c == 'a') {      // i 挿入モード（前）
+            } else if (c == 'a') {      // a 挿入モード（前）
                 mode = INSERT;
                 cursorPos++;
             } else if (c == 'I') {      // I 挿入モード（行頭）
