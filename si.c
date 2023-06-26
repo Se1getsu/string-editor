@@ -56,7 +56,7 @@ void editLine(char line[MAX_LINE_LENGTH]) {
     int cursorPos = lineLength;
     char command = '\0';
     enum SIMode mode = INSERT;
-    int insertFlg = 0;
+    int insertFlg = -1;
 
     enableRawMode();
 
@@ -76,10 +76,12 @@ void editLine(char line[MAX_LINE_LENGTH]) {
             if (c == '[') {
                 command = c; continue;
             } else if (command == '[') {
-                int lastPos = insertFlg ? lineLength : lineLength-1;
-                if (insertFlg) {    // INSERTモードで矢印を押した
-                    cursorPos++;
+                int lastPos = lineLength-1;
+                if (insertFlg+1) {    // INSERTモードで矢印を押した
+                    cursorPos = insertFlg;
+                    lastPos++;
                     mode = INSERT;
+                    insertFlg = -1;
                 }
                 if (c == 'C' && cursorPos < lastPos) {  // Esc-[-C カーソルを右に移動
                     cursorPos++;     
@@ -88,7 +90,7 @@ void editLine(char line[MAX_LINE_LENGTH]) {
                 }
                 command = '\0'; continue;
             } else {
-                command = '\0'; insertFlg = 0;
+                command = '\0'; insertFlg = -1;
             }
 
             if (c == 'i') {      // i 挿入モード（前）
@@ -123,8 +125,8 @@ void editLine(char line[MAX_LINE_LENGTH]) {
         /* 挿入モードのキーバインド */
         } else if (mode == INSERT) {
             if (c == KEY_ESCAPE || c == '\x1b') {     // Esc Ctrl-[ ノーマルモード
-                mode = NORMAL; insertFlg = 1;
-                cursorPos--;
+                mode = NORMAL; insertFlg = cursorPos;
+                if (cursorPos > 0) cursorPos--;
                 continue;
 
             } else if (c == KEY_BACKSPACE) {    // バックスペースキーで文字を削除
