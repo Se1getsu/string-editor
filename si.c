@@ -49,8 +49,7 @@ void showEditor(enum SIMode mode, char line[MAX_LINE_LENGTH], int cursorPos) {
     /* 1行目を描画 */
     printf("%s \n", line);
     /* 2行目を描画 */
-    //if (mode == INSERT) printf("\e[1m-- INSERT --\e[m");    /*太字*/
-    printf("<%d>", cursorPos);
+    if (mode == INSERT) printf("\e[1m-- INSERT --\e[m");    /*太字*/
     /* カーソルを1行上の先頭に移動 */
     printf("\033[1A\r");
     /* cursorPos 回カーソルを進める */
@@ -146,7 +145,7 @@ int editLine(char line[MAX_LINE_LENGTH]) {
                 break;
 
             case '$':   /* カーソルを行末へ */
-                cursorPos = lineLength-1;
+                if (lineLength) cursorPos = lineLength-1;
                 break;
 
             case 'w':   /* カーソルをCSV次列先頭へ */
