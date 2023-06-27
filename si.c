@@ -31,14 +31,24 @@ void disableRawMode() {
 enum SIMode { NORMAL, INSERT };
 
 /**
+ * 文字列エディタをコマンドライン上から消す
+ */
+void hideEditor() {
+    printf("\r\033[2K");    /*1行目クリア*/
+    printf("\n\033[2K");    /*2行目クリア*/
+    printf("\033[1A\r");    /*1行目にカーソルを戻す*/
+    fflush(stdout);
+}
+
+/**
  * 文字列エディタをコマンドライン上に描画する
  */
 void showEditor(enum SIMode mode, char line[MAX_LINE_LENGTH], int cursorPos) {
+    /* エディタ画面をリセット */
+    hideEditor();
     /* 1行目を描画 */
-    printf("\r\033[2K");    /*クリア*/
     printf("%s \n", line);
     /* 2行目を描画 */
-    printf("\033[2K");      /*クリア*/
     if (mode == INSERT) printf("\e[1m-- INSERT --\e[m");    /*太字*/
     /* カーソルを1行上の先頭に移動 */
     printf("\033[1A\r");
@@ -109,7 +119,9 @@ int editLine(char line[MAX_LINE_LENGTH]) {
                 mode = INSERT; break;
 
             case 'a':   /* 挿入モード(後) */
-                mode = INSERT; cursorPos++; break;
+                mode = INSERT;
+                if (lineLength) cursorPos++;
+                break;
 
             case 'I':   /* 挿入モード(行頭) */
                 mode = INSERT; cursorPos = 0; break;
@@ -189,8 +201,8 @@ int editLine(char line[MAX_LINE_LENGTH]) {
         }
     }
 
+    hideEditor();
     disableRawMode();
-    printf("\n");
     return 0;
 }
 
