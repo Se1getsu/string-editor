@@ -39,7 +39,10 @@ void showEditor(enum SIMode mode, char line[MAX_LINE_LENGTH], int cursorPos) {
     printf("%s \n", line);
     /* 2行目を描画 */
     printf("\033[2K");      /*クリア*/
-    if (mode == INSERT) printf("\e[1m-- INSERT --\e[m");    /*太字*/
+    if (mode == INSERT) { //printf("\e[1m-- INSERT --\e[m");    /*太字*/
+        printf("[%d]", cursorPos);
+        char* p = line; while(*p) { printf("%X ", *p); p++; }
+    }
     /* カーソルを1行上の先頭に移動 */
     printf("\033[1A\r");
     /* cursorPos 回カーソルを進める */
@@ -49,10 +52,45 @@ void showEditor(enum SIMode mode, char line[MAX_LINE_LENGTH], int cursorPos) {
 }
 
 /**
+ * UTF-8文字列 LINE の COUNT+1 文字目の開始位置のインデックスを調べる
+ */
+int utf8_offset(char* line, int count) {
+    int res = 0;
+    while (count-- && *(line+res)) {
+        int charLength = 1, mask = 0x80;
+        if (*(line+res) & mask) {
+            while (*(line+res) & (mask = mask >> 1) && ++charLength < 4);
+            res = res + charLength;
+        } else {
+            res++;
+        }
+    }
+    return res;
+}
+
+/**
+ * UTF-8文字列 LINE の文字数を調べる
+ */
+int utf8_len(char* line) {
+    int offset = 0, count = 0;
+    while (*(line+offset)) {
+        int charLength = 1, mask = 0x80; count++;
+        if (*(line+offset) & mask) {
+            while (*(line+offset) & (mask = mask >> 1) && ++charLength < 4);
+            offset = offset + charLength;
+        } else {
+            offset++;
+        }
+    }
+    return count;
+}
+
+/**
  * 文字列 LINE をコマンドライン上で編集させる
  */
 void editLine(char line[MAX_LINE_LENGTH]) {
-    int lineLength = strlen(line);
+    int lineLength = utf8_len(line);
+    int byteLength = strlen(line);
     int cursorPos = lineLength;
     char command = '\0';
     enum SIMode mode = INSERT;
@@ -175,8 +213,22 @@ void editLine(char line[MAX_LINE_LENGTH]) {
                 if (lineLength >= MAX_LINE_LENGTH - 1) continue;
                 for (i=lineLength; i > cursorPos; i--) line[i] = line[i-1];
                 line[cursorPos] = c;
-                cursorPos++;
-                lineLength++;
+                cursorPos++; lineLength++; byteLength++;
+
+            /* 2バイト以上の文字を挿入 */
+            } else if (c & 0x80) {
+                int charLength = 1, mask = 0x80, i, cursorIdx;
+                while (c & (mask = mask >> 1) && ++charLength < 4);
+                if (lineLength >= MAX_LINE_LENGTH - charLength) continue;
+                charLength = 3;
+
+                cursorIdx = utf8_offset(line, cursorPos);
+                for (i=byteLength; i >= cursorIdx; i--)
+                    line[i+charLength] = line[i];
+                line[cursorIdx] = c;
+                for (i=1; i < charLength; i++)
+                    line[cursorIdx+i] = getchar();
+                cursorPos++; lineLength++; byteLength = byteLength + charLength;
             }
         }
     }
@@ -186,10 +238,10 @@ void editLine(char line[MAX_LINE_LENGTH]) {
 }
 
 int main() {
-    char line[MAX_LINE_LENGTH] = "Hello, world!";
+    char line[MAX_LINE_LENGTH] = "thisテストdesu";
     editLine(line);
     printf("結果：\"%s\"\n", line);
     return 0;
 }
 
-/* ================================[Safe Width]================================= */
+/* ================================[Safe Width]================================ */
