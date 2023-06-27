@@ -63,6 +63,7 @@ void editLine(char line[MAX_LINE_LENGTH]) {
     while (1) {
         char c;
         showEditor(mode, line, cursorPos);
+        if (cursorPos < 0 || cursorPos > lineLength) printf("INVALID %d", cursorPos);
         
         c = getchar();
 
@@ -71,7 +72,7 @@ void editLine(char line[MAX_LINE_LENGTH]) {
         
         /* ノーマルモードのキーバインド */
         if (mode == NORMAL) {
-            int i, tmp;
+            int i;
 
             if (c == '[') {
                 command = c; continue;
@@ -131,17 +132,13 @@ void editLine(char line[MAX_LINE_LENGTH]) {
                 break;
 
             case 'e':   /* カーソルをCSV次列末尾へ */
-                tmp = cursorPos;
-                while (cursorPos < lineLength-2 && line[++cursorPos+1] != ',');
-                if ((line[lineLength-1] != ',' && cursorPos == lineLength-2) ||
-                    (line[lineLength-1] == ',' && tmp == cursorPos)) cursorPos++;
+                if (cursorPos >= lineLength-1) break;
+                while (++cursorPos < lineLength-1 && line[cursorPos+1] != ',');
                 break;
 
             case 'b':   /* カーソルをCSV前列先頭へ */
-                tmp = cursorPos;
-                while (cursorPos > 1 && line[--cursorPos-1] != ',');
-                if ((line[0] != ',' && cursorPos == 1) ||
-                    (line[0] == ',' && tmp == cursorPos)) cursorPos--;
+                if (cursorPos <= 0) break;
+                while (--cursorPos > 0 && line[cursorPos-1] != ',');
                 break;
 
             /* 編集 */
