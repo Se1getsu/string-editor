@@ -50,13 +50,21 @@ void showEditor(enum SIMode mode, char line[MAX_LINE_LENGTH], int cursorPos) {
 
 /**
  * 文字列 LINE をコマンドライン上で編集させる
+ * LINE がマルチバイト文字を含む場合は 1 を返す
  */
-void editLine(char line[MAX_LINE_LENGTH]) {
+int editLine(char line[MAX_LINE_LENGTH]) {
     int lineLength = strlen(line);
     int cursorPos = lineLength;
     char command = '\0';
     enum SIMode mode = INSERT;
     int insertFlg = -1;
+    char* p;
+
+    p = line;
+    while (*p) {
+        if (*p & 0x80) return 1;
+        p++;
+    } 
 
     enableRawMode();
 
@@ -183,12 +191,15 @@ void editLine(char line[MAX_LINE_LENGTH]) {
 
     disableRawMode();
     printf("\n");
+    return 0;
 }
 
 int main() {
     char line[MAX_LINE_LENGTH] = "Hello, world!";
-    editLine(line);
-    printf("結果：\"%s\"\n", line);
+    if (editLine(line))
+        printf("ERROR\n");
+    else
+        printf("結果：\"%s\"\n", line);
     return 0;
 }
 
