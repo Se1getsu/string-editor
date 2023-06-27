@@ -81,7 +81,8 @@ int editLine(char line[MAX_LINE_LENGTH]) {
     while (1) {
         char c;
         showEditor(mode, line, cursorPos);
-        if (cursorPos < 0 || cursorPos > lineLength) printf("INVALID %d", cursorPos);
+        if (cursorPos < 0 || cursorPos > (mode == INSERT ? lineLength : lineLength-1))
+            printf("INVALID %d", cursorPos);    /*ここが実行されたら要デバッグ*/
         
         c = getchar();
 
