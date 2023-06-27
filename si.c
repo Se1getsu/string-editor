@@ -163,7 +163,7 @@ int editLine(char line[MAX_LINE_LENGTH]) {
         /* 挿入モードのキーバインド */
         } else if (mode == INSERT) {
             /* Esc Ctrl-[ ノーマルモード */
-            if (c == KEY_ESCAPE || c == '\x1b') {
+            if (c == KEY_ESCAPE) {
                 mode = NORMAL; insertFlg = cursorPos;
                 if (cursorPos > 0) cursorPos--;
                 continue;
