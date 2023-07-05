@@ -93,9 +93,7 @@ int editLine(char line[MAX_LINE_LENGTH]) {
         if (mode == NORMAL) {
             int i;
 
-            if (c == '[') {
-                command = c; continue;
-            } else if (command == '[') {
+            if (command == '[') {
                 int lastPos = lineLength-1;
                 if (insertFlg+1) {    /*挿入モードで矢印キーを押した*/
                     cursorPos = insertFlg;
@@ -111,6 +109,18 @@ int editLine(char line[MAX_LINE_LENGTH]) {
                     cursorPos--;
                 }
                 command = '\0'; continue;
+
+            } else if (command == 'd') {
+                /* d-d 行をクリア */
+                if (c == 'd') {
+                    line[0] = '\0';
+                    cursorPos = 0; lineLength = 0;
+                }
+                command = '\0'; continue;
+            }
+            
+            if (c == '[' || c == 'd') {
+                command = c; continue;
             }
             command = '\0'; insertFlg = -1;
 
@@ -194,7 +204,7 @@ int editLine(char line[MAX_LINE_LENGTH]) {
             } else if (c >= '\x20' && c <= '\x7E') {
                 int i;
                 if (lineLength >= MAX_LINE_LENGTH - 1) continue;
-                for (i=lineLength; i > cursorPos; i--) line[i] = line[i-1];
+                for (i=lineLength+1; i > cursorPos; i--) line[i] = line[i-1];
                 line[cursorPos] = c;
                 cursorPos++;
                 lineLength++;
